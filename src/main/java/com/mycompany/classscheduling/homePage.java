@@ -26,11 +26,8 @@ public class homePage extends javax.swing.JFrame {
         setResizable(false);
         setLocationRelativeTo(null);
         setTitle("Add Class Schedule - " + currentUsername);
-
         Database.initialize();
         Database.setupDepartmentDropdown(jComboBox1);
-
-        // SAFE spinner setup
         Database.setupTimeSpinners(jSpinner1, jSpinner2);
     }
 
@@ -159,13 +156,11 @@ public class homePage extends javax.swing.JFrame {
     String name = subjField.getText();
     String prof = profField.getText();
     
-    // Get time as integers (e.g., 800 for 8:00 AM)
     int start = Database.getSpinnerTimeAsInt(jSpinner1); 
     int end = Database.getSpinnerTimeAsInt(jSpinner2);
     
     String dept = (String) jComboBox1.getSelectedItem();
     
-    // Validate that we have a username before sending to DB
     if (currentUsername != null) {
         Database.handleAddSubject(name, prof, start, end, dept, currentUsername, this);
         Database.clearAddSubjectForm(subjField, profField, jSpinner1, jSpinner2);

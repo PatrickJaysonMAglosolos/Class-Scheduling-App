@@ -34,7 +34,6 @@ public class Database {
         }
     }
 
-    // --- Auth Logic (RESTORED) ---
     public static void handleLogin(String username, String password, JFrame currentFrame) {
         if (username.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(currentFrame, "Please fill all fields");
@@ -77,7 +76,6 @@ public class Database {
         passField.setText("");
     }
 
-    // --- HEAP SORT ALGORITHM ---
     public static void heapSort(List<SubjectData> list) {
         int n = list.size();
         for (int i = n / 2 - 1; i >= 0; i--) heapify(list, n, i);
@@ -103,7 +101,6 @@ public class Database {
         }
     }
 
-    // --- Load Table Logic ---
     public static void loadScheduleToTable(JTable table, String username, JFrame currentFrame) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         model.setRowCount(0);
@@ -131,7 +128,6 @@ public class Database {
         }
     }
 
-    // --- UI Helpers ---
     public static void setupTimeSpinners(JSpinner s1, JSpinner s2) {
         Calendar cal = Calendar.getInstance();
         cal.set(Calendar.HOUR_OF_DAY, 8); cal.set(Calendar.MINUTE, 0);
@@ -146,16 +142,14 @@ public class Database {
     public static int getSpinnerTimeAsInt(JSpinner spinner) {
         Object value = spinner.getValue();
     
-    // If it's a Date (the correct way for HH:mm)
     if (value instanceof java.util.Date) {
         java.util.Calendar cal = java.util.Calendar.getInstance();
         cal.setTime((java.util.Date) value);
         return (cal.get(java.util.Calendar.HOUR_OF_DAY) * 100) + cal.get(java.util.Calendar.MINUTE);
     } 
     
-    // If it's still an Integer (fallback to prevent crash)
     if (value instanceof Integer) {
-        return ((Integer) value) * 100; // Turns 7 into 700
+        return ((Integer) value) * 100;
     }
     
     return 0;

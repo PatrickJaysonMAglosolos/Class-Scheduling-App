@@ -22,10 +22,8 @@ public class scheduleTable extends javax.swing.JFrame {
         setResizable(false);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setTitle("My Class Schedule");
-        
+        setTitle("My Class Schedule");        
         Database.initialize();
-        // Pass currentUsername to the database method
         Database.loadScheduleToTable(jTable1, currentUsername, this);
     }
 
