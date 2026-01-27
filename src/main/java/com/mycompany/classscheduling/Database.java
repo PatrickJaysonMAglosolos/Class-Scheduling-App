@@ -199,4 +199,24 @@ public class Database {
         new loginPage().setVisible(true);
         frame.dispose();
     }
+    
+    public static void handleRemoveSubject(String name, String prof, String dept, String user, JFrame frame) {
+    String sql = "DELETE FROM subjects WHERE name = ? AND professor = ? AND department = ? AND username = ?";
+    
+    try (Connection conn = connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        pstmt.setString(1, name);
+        pstmt.setString(2, prof);
+        pstmt.setString(3, dept);
+        pstmt.setString(4, user);
+        
+        int deletedRows = pstmt.executeUpdate();
+        if (deletedRows > 0) {
+            JOptionPane.showMessageDialog(frame, "Subject removed successfully!");
+        } else {
+            JOptionPane.showMessageDialog(frame, "Error: Subject not found.");
+        }
+    } catch (SQLException e) {
+        JOptionPane.showMessageDialog(frame, "Database Error: " + e.getMessage());
+    }
+}
 }

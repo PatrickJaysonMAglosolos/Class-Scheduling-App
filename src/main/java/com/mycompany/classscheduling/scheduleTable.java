@@ -3,6 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package com.mycompany.classscheduling;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -40,6 +41,7 @@ public class scheduleTable extends javax.swing.JFrame {
         jTable1 = new javax.swing.JTable();
         backBtn = new javax.swing.JButton();
         logoutBtn = new javax.swing.JButton();
+        removeBtn = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -64,6 +66,10 @@ public class scheduleTable extends javax.swing.JFrame {
         logoutBtn.setText("Logout");
         logoutBtn.addActionListener(this::logoutBtnActionPerformed);
 
+        removeBtn.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        removeBtn.setText("Remove");
+        removeBtn.addActionListener(this::removeBtnActionPerformed);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -73,7 +79,9 @@ public class scheduleTable extends javax.swing.JFrame {
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 595, Short.MAX_VALUE)
                 .addContainerGap())
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(64, 64, 64)
+                .addComponent(removeBtn)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(backBtn)
                 .addGap(40, 40, 40)
                 .addComponent(logoutBtn)
@@ -87,7 +95,8 @@ public class scheduleTable extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(backBtn)
-                    .addComponent(logoutBtn))
+                    .addComponent(logoutBtn)
+                    .addComponent(removeBtn))
                 .addGap(22, 22, 22))
         );
 
@@ -105,6 +114,33 @@ public class scheduleTable extends javax.swing.JFrame {
         new homePage(currentUsername).setVisible(true);
         this.dispose();
     }//GEN-LAST:event_backBtnActionPerformed
+
+    private void removeBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeBtnActionPerformed
+        // TODO add your handling code here:
+    int selectedRow = jTable1.getSelectedRow();
+    
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Please select a subject from the table to remove.");
+        return;
+    }
+
+    // Get data from the selected row (Columns: 0=Name, 1=Prof, 2=Dept)
+    String name = jTable1.getValueAt(selectedRow, 0).toString();
+    String prof = jTable1.getValueAt(selectedRow, 1).toString();
+    String dept = jTable1.getValueAt(selectedRow, 2).toString();
+
+    // Confirm deletion
+    int confirm = JOptionPane.showConfirmDialog(this, 
+        "Are you sure you want to delete " + name + "?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
+    
+    if (confirm == JOptionPane.YES_OPTION) {
+        // Call database to delete
+        Database.handleRemoveSubject(name, prof, dept, currentUsername, this);
+        
+        // Refresh the table to show it's gone
+        Database.loadScheduleToTable(jTable1, currentUsername, this);
+    }
+    }//GEN-LAST:event_removeBtnActionPerformed
 
     /**
      * @param args the command line arguments
@@ -136,5 +172,6 @@ public class scheduleTable extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable jTable1;
     private javax.swing.JButton logoutBtn;
+    private javax.swing.JButton removeBtn;
     // End of variables declaration//GEN-END:variables
 }
