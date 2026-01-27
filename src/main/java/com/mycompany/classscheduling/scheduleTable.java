@@ -123,21 +123,15 @@ public class scheduleTable extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(this, "Please select a subject from the table to remove.");
         return;
     }
-
-    // Get data from the selected row (Columns: 0=Name, 1=Prof, 2=Dept)
     String name = jTable1.getValueAt(selectedRow, 0).toString();
     String prof = jTable1.getValueAt(selectedRow, 1).toString();
     String dept = jTable1.getValueAt(selectedRow, 2).toString();
 
-    // Confirm deletion
     int confirm = JOptionPane.showConfirmDialog(this, 
         "Are you sure you want to delete " + name + "?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
     
     if (confirm == JOptionPane.YES_OPTION) {
-        // Call database to delete
         Database.handleRemoveSubject(name, prof, dept, currentUsername, this);
-        
-        // Refresh the table to show it's gone
         Database.loadScheduleToTable(jTable1, currentUsername, this);
     }
     }//GEN-LAST:event_removeBtnActionPerformed
