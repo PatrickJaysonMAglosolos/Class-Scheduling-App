@@ -23,11 +23,18 @@ public class Database {
 
     public static void initialize() {
         String usersTable = "CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT NOT NULL);";
-        String subjectsTable = "CREATE TABLE IF NOT EXISTS subjects (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, professor TEXT, startTime INTEGER, endTime INTEGER, department TEXT, username TEXT);";
+        String subjectsTable = "CREATE TABLE IF NOT EXISTS subjects (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, professor TEXT, startTime INTEGER, endTime INTEGER, dayOfWeek TEXT, department TEXT, username TEXT);";
 
         try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
             stmt.execute(usersTable);
             stmt.execute(subjectsTable);
+            
+            try {
+                stmt.execute("ALTER TABLE subjects ADD COLUMN dayOfWeek TEXT;");
+            } catch (SQLException e) {
+                // Column already exists
+            }
+
             stmt.execute("INSERT OR IGNORE INTO users VALUES ('admin', '1234')");
         } catch (SQLException e) {
             e.printStackTrace();
@@ -116,12 +123,20 @@ public class Database {
                     rs.getString("professor"),
                     rs.getInt("startTime"),
                     rs.getInt("endTime"),
-                    rs.getString("department")
+                    rs.getString("department"),
+                    rs.getString("dayOfWeek") 
                 ));
             }
             heapSort(subjects);
             for (SubjectData s : subjects) {
-                model.addRow(new Object[]{s.name, s.prof, s.department, formatTime(s.start), formatTime(s.end)});
+                model.addRow(new Object[]{
+                    s.name, 
+                    s.prof, 
+                    s.day, 
+                    formatTime(s.start), 
+                    formatTime(s.end), 
+                    s.department
+                });
             }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(currentFrame, "Error: " + e.getMessage());
@@ -141,18 +156,15 @@ public class Database {
 
     public static int getSpinnerTimeAsInt(JSpinner spinner) {
         Object value = spinner.getValue();
-    
-    if (value instanceof java.util.Date) {
-        java.util.Calendar cal = java.util.Calendar.getInstance();
-        cal.setTime((java.util.Date) value);
-        return (cal.get(java.util.Calendar.HOUR_OF_DAY) * 100) + cal.get(java.util.Calendar.MINUTE);
-    } 
-    
-    if (value instanceof Integer) {
-        return ((Integer) value) * 100;
-    }
-    
-    return 0;
+        if (value instanceof java.util.Date) {
+            java.util.Calendar cal = java.util.Calendar.getInstance();
+            cal.setTime((java.util.Date) value);
+            return (cal.get(java.util.Calendar.HOUR_OF_DAY) * 100) + cal.get(java.util.Calendar.MINUTE);
+        } 
+        if (value instanceof Integer) {
+            return ((Integer) value) * 100;
+        }
+        return 0;
     }
 
     public static String formatTime(int time) {
@@ -169,20 +181,44 @@ public class Database {
         for (String d : depts) comboBox.addItem(d);
     }
 
+    public static void setupDayDropdown(JComboBox<String> comboBox) {
+        comboBox.removeAllItems();
+        String[] days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+        for (String d : days) comboBox.addItem(d);
+    }
+
     public static void clearAddSubjectForm(JTextField f1, JTextField f2, JSpinner s1, JSpinner s2) {
         f1.setText(""); f2.setText(""); setupTimeSpinners(s1, s2);
     }
 
-    public static void handleAddSubject(String name, String prof, int start, int end, String dept, String user, JFrame frame) {
+    public static void handleAddSubject(String name, String prof, int start, int end, String day, String dept, String user, JFrame frame) {
         if (name.isEmpty() || prof.isEmpty()) {
             JOptionPane.showMessageDialog(frame, "All fields required!");
             return;
         }
-        String sql = "INSERT INTO subjects(name, professor, startTime, endTime, department, username) VALUES(?,?,?,?,?,?)";
+        
+        String checkSql = "SELECT COUNT(*) FROM subjects WHERE username = ? AND dayOfWeek = ? AND startTime < ? AND endTime > ?";
+        try (Connection conn = connect(); PreparedStatement checkPstmt = conn.prepareStatement(checkSql)) {
+            checkPstmt.setString(1, user);
+            checkPstmt.setString(2, day);
+            checkPstmt.setInt(3, end);
+            checkPstmt.setInt(4, start);
+            ResultSet rs = checkPstmt.executeQuery();
+            if (rs.next() && rs.getInt(1) > 0) {
+                JOptionPane.showMessageDialog(frame, "Conflict: A class is already scheduled on " + day + " at this time!");
+                return;
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+
+        String sql = "INSERT INTO subjects(name, professor, startTime, endTime, dayOfWeek, department, username) VALUES(?,?,?,?,?,?,?)";
         try (Connection conn = connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, name); pstmt.setString(2, prof);
-            pstmt.setInt(3, start); pstmt.setInt(4, end);
-            pstmt.setString(5, dept); pstmt.setString(6, user);
+            pstmt.setString(1, name); 
+            pstmt.setString(2, prof);
+            pstmt.setInt(3, start); 
+            pstmt.setInt(4, end);
+            pstmt.setString(5, day); 
+            pstmt.setString(6, dept); 
+            pstmt.setString(7, user);
             pstmt.executeUpdate();
             JOptionPane.showMessageDialog(frame, "Subject Added!");
         } catch (SQLException e) {
@@ -199,24 +235,23 @@ public class Database {
         new loginPage().setVisible(true);
         frame.dispose();
     }
-    
-    public static void handleRemoveSubject(String name, String prof, String dept, String user, JFrame frame) {
-    String sql = "DELETE FROM subjects WHERE name = ? AND professor = ? AND department = ? AND username = ?";
-    
-    try (Connection conn = connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-        pstmt.setString(1, name);
-        pstmt.setString(2, prof);
-        pstmt.setString(3, dept);
-        pstmt.setString(4, user);
-        
-        int deletedRows = pstmt.executeUpdate();
-        if (deletedRows > 0) {
-            JOptionPane.showMessageDialog(frame, "Subject removed successfully!");
-        } else {
-            JOptionPane.showMessageDialog(frame, "Error: Subject not found.");
+
+    public static void handleRemoveSubject(String name, String prof, String day, String dept, String user, JFrame frame) {
+        String sql = "DELETE FROM subjects WHERE name = ? AND professor = ? AND dayOfWeek = ? AND department = ? AND username = ?";
+        try (Connection conn = connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, name);
+            pstmt.setString(2, prof);
+            pstmt.setString(3, day);
+            pstmt.setString(4, dept);
+            pstmt.setString(5, user);
+            int deletedRows = pstmt.executeUpdate();
+            if (deletedRows > 0) {
+                JOptionPane.showMessageDialog(frame, "Subject removed successfully!");
+            } else {
+                JOptionPane.showMessageDialog(frame, "Error: Subject not found.");
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(frame, "Database Error: " + e.getMessage());
         }
-    } catch (SQLException e) {
-        JOptionPane.showMessageDialog(frame, "Database Error: " + e.getMessage());
     }
-}
 }

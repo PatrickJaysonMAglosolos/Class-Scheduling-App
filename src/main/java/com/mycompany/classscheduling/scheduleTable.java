@@ -47,13 +47,13 @@ public class scheduleTable extends javax.swing.JFrame {
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null},
-                {null, null, null, null, null},
-                {null, null, null, null, null},
-                {null, null, null, null, null}
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null}
             },
             new String [] {
-                "Subject", "Professor", "Department", "Start Time", "End Time"
+                "Subject", "Professor", "Day", "Start Time", "End Time", "Department"
             }
         ));
         jScrollPane1.setViewportView(jTable1);
@@ -125,13 +125,14 @@ public class scheduleTable extends javax.swing.JFrame {
     }
     String name = jTable1.getValueAt(selectedRow, 0).toString();
     String prof = jTable1.getValueAt(selectedRow, 1).toString();
-    String dept = jTable1.getValueAt(selectedRow, 2).toString();
+    String day  = jTable1.getValueAt(selectedRow, 2).toString(); 
+    String dept = jTable1.getValueAt(selectedRow, 5).toString();
 
     int confirm = JOptionPane.showConfirmDialog(this, 
-        "Are you sure you want to delete " + name + "?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
+        "Are you sure you want to delete " + name + " on " + day + "?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
     
     if (confirm == JOptionPane.YES_OPTION) {
-        Database.handleRemoveSubject(name, prof, dept, currentUsername, this);
+        Database.handleRemoveSubject(name, prof, day, dept, currentUsername, this);
         Database.loadScheduleToTable(jTable1, currentUsername, this);
     }
     }//GEN-LAST:event_removeBtnActionPerformed
